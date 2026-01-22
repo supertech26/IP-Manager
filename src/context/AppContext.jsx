@@ -106,7 +106,13 @@ export function AppProvider({ children }) {
             .insert([newItem])
             .select();
 
-        if (!error && data) {
+        if (error) {
+            console.error('Supabase Insert Error:', error);
+            alert(`Error saving product: ${error.message}`);
+            return;
+        }
+
+        if (data) {
             setInventory([data[0], ...inventory]);
             logActivity('Add Product', `Added ${item.name}`);
         }
