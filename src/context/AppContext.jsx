@@ -356,8 +356,14 @@ export function AppProvider({ children }) {
         setCurrentUser(sessionData.user);
         setSession(sessionData);
 
-        await updateUser(user.id, { last_active: new Date().toISOString() });
+        try {
+            await updateUser(user.id, { last_active: new Date().toISOString() });
+        } catch (err) {
+            console.error('Failed to update last_active:', err);
+        }
+
         logActivity('Login', `User ${username} logged in`);
+        console.log('Login successful, returning true');
 
         return { success: true };
     };
@@ -441,6 +447,7 @@ export function AppProvider({ children }) {
         activityLogs,
         currentUser,
         session,
+        isAuthenticated: !!currentUser,
         addInventoryItem,
         updateInventoryItem,
         deleteInventoryItem,
