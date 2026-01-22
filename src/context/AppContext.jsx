@@ -38,14 +38,40 @@ export function AppProvider({ children }) {
                 .from('inventory')
                 .select('*')
                 .order('created_at', { ascending: false });
-            if (inventoryData) setInventory(inventoryData);
+            if (inventoryData) {
+                const mappedInventory = inventoryData.map(item => ({
+                    ...item,
+                    dateAdded: item.date_added,
+                    costPrice: item.cost_price,
+                    lowStockThreshold: item.low_stock_threshold
+                }));
+                setInventory(mappedInventory);
+            }
 
             // Load transactions
             const { data: transactionsData } = await supabase
                 .from('transactions')
                 .select('*')
                 .order('date', { ascending: false });
-            if (transactionsData) setTransactions(transactionsData);
+            if (transactionsData) {
+                const mappedTransactions = transactionsData.map(tx => ({
+                    ...tx,
+                    customerName: tx.customer_name,
+                    phoneNumber: tx.phone_number,
+                    productId: tx.product_id,
+                    productName: tx.product_name,
+                    subName: tx.sub_name,
+                    subType: tx.sub_type,
+                    digitalType: tx.digital_type,
+                    startDate: tx.start_date,
+                    expiryDate: tx.expiry_date,
+                    sellingPrice: tx.selling_price,
+                    totalAmount: tx.total_amount,
+                    activationCode: tx.activation_code,
+                    m3uUrl: tx.m3u_url
+                }));
+                setTransactions(mappedTransactions);
+            }
 
             // Load users
             const { data: usersData, error: usersError } = await supabase
@@ -101,8 +127,17 @@ export function AppProvider({ children }) {
     const addInventoryItem = async (item) => {
         const newItem = {
             id: `IP-${Date.now()}`,
-            ...item,
+            name: item.name,
+            category: item.category,
+            type: item.type,
+            supplier: item.supplier,
+            date_added: item.dateAdded,
+            price: parseFloat(item.price),
+            cost_price: parseFloat(item.costPrice),
+            stock: parseInt(item.stock),
             initial_stock: parseInt(item.stock),
+            low_stock_threshold: parseInt(item.lowStockThreshold),
+            status: item.status,
             created_at: new Date().toISOString()
         };
 
@@ -118,15 +153,30 @@ export function AppProvider({ children }) {
         }
 
         if (data) {
-            setInventory([data[0], ...inventory]);
+            const addedItem = {
+                ...data[0],
+                dateAdded: data[0].date_added,
+                costPrice: data[0].cost_price,
+                lowStockThreshold: data[0].low_stock_threshold
+            };
+            setInventory([addedItem, ...inventory]);
             logActivity('Add Product', `Added ${item.name}`);
         }
     };
 
     const updateInventoryItem = async (id, updates) => {
+        // Map updates to snake_case
+        const dbUpdates = {
+            ...updates,
+            cost_price: updates.costPrice,
+            date_added: updates.dateAdded,
+            low_stock_threshold: updates.lowStockThreshold,
+            updated_at: new Date().toISOString()
+        };
+
         const { data, error } = await supabase
             .from('inventory')
-            .update({ ...updates, updated_at: new Date().toISOString() })
+            .update(dbUpdates)
             .eq('id', id)
             .select();
 
@@ -152,7 +202,24 @@ export function AppProvider({ children }) {
     const addTransaction = async (transaction) => {
         const newTransaction = {
             id: `TXN-${Date.now()}`,
-            ...transaction,
+            customer_name: transaction.customerName,
+            phone_number: transaction.phoneNumber,
+            product_id: transaction.productId,
+            product_name: transaction.productName,
+            sub_name: transaction.subName,
+            sub_type: transaction.subType,
+            digital_type: transaction.digitalType,
+            duration: transaction.duration,
+            start_date: transaction.startDate,
+            expiry_date: transaction.expiryDate,
+            quantity: transaction.quantity || 1,
+            selling_price: transaction.sellingPrice,
+            total_amount: transaction.totalAmount,
+            profit: transaction.profit,
+            status: transaction.status,
+            activation_code: transaction.activationCode,
+            m3u_url: transaction.m3uUrl,
+            notes: transaction.notes,
             date: new Date().toISOString(),
             created_at: new Date().toISOString()
         };
@@ -163,26 +230,61 @@ export function AppProvider({ children }) {
             .select();
 
         if (!error && data) {
-            setTransactions([data[0], ...transactions]);
+            const addedTx = {
+                ...data[0],
+                customerName: data[0].customer_name,
+                phoneNumber: data[0].phone_number,
+                productId: data[0].product_id,
+                productName: data[0].product_name,
+                subName: data[0].sub_name,
+                subType: data[0].sub_type,
+                digitalType: data[0].digital_type,
+                startDate: data[0].start_date,
+                expiryDate: data[0].expiry_date,
+                sellingPrice: data[0].selling_price,
+                totalAmount: data[0].total_amount,
+                activationCode: data[0].activation_code,
+                m3uUrl: data[0].m3u_url
+            };
+            setTransactions([addedTx, ...transactions]);
 
             // Update inventory stock
-            if (transaction.product_id) {
-                const product = inventory.find(p => p.id === transaction.product_id);
+            if (transaction.productId) {
+                const product = inventory.find(p => p.id === transaction.productId);
                 if (product) {
-                    await updateInventoryItem(transaction.product_id, {
+                    await updateInventoryItem(transaction.productId, {
+                        ...product,
                         stock: product.stock - (transaction.quantity || 1)
                     });
                 }
             }
 
-            logActivity('New Sale', `Sale to ${transaction.customer_name}`);
+            logActivity('New Sale', `Sale to ${transaction.customerName}`);
         }
     };
 
     const updateTransaction = async (id, updates) => {
+        const dbUpdates = {
+            ...updates,
+            customer_name: updates.customerName,
+            phone_number: updates.phoneNumber,
+            product_id: updates.productId,
+            product_name: updates.productName,
+            sub_name: updates.subName,
+            sub_type: updates.subType,
+            digital_type: updates.digitalType,
+            start_date: updates.startDate,
+            expiry_date: updates.expiryDate,
+            selling_price: updates.sellingPrice,
+            total_amount: updates.totalAmount,
+            activation_code: updates.activationCode,
+            m3u_url: updates.m3uUrl,
+            updated_at: new Date().toISOString()
+        };
+
         const { data, error } = await supabase
             .from('transactions')
-            .update(updates)
+            .update(dbUpdates)
             .eq('id', id)
             .select();
 
