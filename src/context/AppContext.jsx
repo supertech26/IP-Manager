@@ -79,7 +79,32 @@ export function AppProvider({ children }) {
                 .select('*');
 
             if (usersError) console.error('Error loading users:', usersError);
-            if (usersData) {
+
+            if (usersData && usersData.length === 0) {
+                console.log('No users found. Creating default admin...');
+                const defaultAdmin = {
+                    id: 'user-admin',
+                    name: 'Administrator',
+                    username: 'admin',
+                    email: 'admin@ipmanager.local',
+                    role: 'Admin',
+                    password_hash: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', // admin123
+                    pin_hash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // 1234
+                    status: 'Active'
+                };
+
+                const { data: newAdmin, error: createError } = await supabase
+                    .from('users')
+                    .insert([defaultAdmin])
+                    .select();
+
+                if (createError) {
+                    console.error('Failed to create default admin:', createError);
+                } else if (newAdmin) {
+                    console.log('Default admin created successfully');
+                    setUsers(newAdmin);
+                }
+            } else if (usersData) {
                 console.log('Users loaded:', usersData.length);
                 setUsers(usersData);
             }
