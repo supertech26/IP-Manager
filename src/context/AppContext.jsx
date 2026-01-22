@@ -433,14 +433,25 @@ export function AppProvider({ children }) {
 
     // Auth Functions
     const login = async (username, password) => {
+        console.log('Login attempt for:', username);
+        console.log('Available users:', users.length, users.map(u => u.username));
+
         const user = users.find(u => u.username === username);
         if (!user) {
+            console.warn('User not found in local state');
             return { success: false, message: 'User not found' };
         }
 
         const passwordHash = await hashString(password);
+        console.log('Login Debug:', {
+            inputPassword: password,
+            computedHash: passwordHash,
+            storedHash: user.password_hash,
+            match: passwordHash === user.password_hash
+        });
 
         if (passwordHash !== user.password_hash) {
+            console.warn('Password hash mismatch');
             return { success: false, message: 'Invalid password' };
         }
 
