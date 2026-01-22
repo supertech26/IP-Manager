@@ -48,10 +48,15 @@ export function AppProvider({ children }) {
             if (transactionsData) setTransactions(transactionsData);
 
             // Load users
-            const { data: usersData } = await supabase
+            const { data: usersData, error: usersError } = await supabase
                 .from('users')
                 .select('*');
-            if (usersData) setUsers(usersData);
+
+            if (usersError) console.error('Error loading users:', usersError);
+            if (usersData) {
+                console.log('Users loaded:', usersData.length);
+                setUsers(usersData);
+            }
 
             // Load suppliers
             const { data: suppliersData } = await supabase
@@ -326,11 +331,19 @@ export function AppProvider({ children }) {
 
     // Auth Functions
     const login = async (username, password) => {
+        console.log('Login attempt:', { username, usersCount: users.length });
+
         const user = users.find(u => u.username === username);
-        if (!user) return { success: false, message: 'User not found' };
+        if (!user) {
+            console.log('User not found in local state');
+            return { success: false, message: 'User not found' };
+        }
 
         const passwordHash = await hashString(password);
+        console.log('Hash comparison:', { input: passwordHash, stored: user.password_hash });
+
         if (passwordHash !== user.password_hash) {
+            console.log('Hash mismatch');
             return { success: false, message: 'Invalid password' };
         }
 
