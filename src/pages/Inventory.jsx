@@ -3,7 +3,7 @@ import { Plus, MagnifyingGlass, Funnel, DownloadSimple, DotsThreeVertical, Penci
 import { useApp } from '../context/AppContext';
 
 export function Inventory() {
-    const { inventory, addProduct, updateProduct, deleteProduct, formatCurrency, t } = useApp();
+    const { inventory, addInventoryItem: addProduct, updateInventoryItem: updateProduct, deleteInventoryItem: deleteProduct, formatCurrency, t } = useApp();
     const [search, setSearch] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
