@@ -433,19 +433,14 @@ export function AppProvider({ children }) {
 
     // Auth Functions
     const login = async (username, password) => {
-        console.log('Login attempt:', { username, usersCount: users.length });
-
         const user = users.find(u => u.username === username);
         if (!user) {
-            console.log('User not found in local state');
             return { success: false, message: 'User not found' };
         }
 
         const passwordHash = await hashString(password);
-        console.log('Hash comparison:', { input: passwordHash, stored: user.password_hash });
 
         if (passwordHash !== user.password_hash) {
-            console.log('Hash mismatch');
             return { success: false, message: 'Invalid password' };
         }
 
@@ -465,7 +460,6 @@ export function AppProvider({ children }) {
         }
 
         logActivity('Login', `User ${username} logged in`);
-        console.log('Login successful, returning true');
 
         return { success: true };
     };
