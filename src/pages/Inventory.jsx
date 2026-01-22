@@ -120,6 +120,10 @@ export function Inventory() {
                             data.stock = parseInt(data.stock);
                             data.lowStockThreshold = parseInt(data.lowStockThreshold || 10);
 
+                            // Ensure required fields
+                            if (!data.status) data.status = 'Active';
+                            if (!editingProduct && !data.dateAdded) data.dateAdded = new Date().toISOString();
+
                             if (editingProduct) updateProduct(editingProduct.id, data);
                             else addProduct(data);
                             setShowModal(false);
@@ -128,13 +132,20 @@ export function Inventory() {
                                 <label className="form-label">Product Name</label>
                                 <input name="name" required className="form-input" defaultValue={editingProduct?.name} />
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                                 <div className="form-group">
                                     <label className="form-label">Category</label>
                                     <select name="category" className="form-select" defaultValue={editingProduct?.category}>
                                         <option>Subscription</option>
                                         <option>Hardware</option>
                                         <option>Add-on</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Type</label>
+                                    <select name="type" className="form-select" defaultValue={editingProduct?.type || 'Digital'}>
+                                        <option value="Digital">Digital</option>
+                                        <option value="Physical">Physical</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
