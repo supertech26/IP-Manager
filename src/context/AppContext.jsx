@@ -489,121 +489,164 @@ export function AppProvider({ children }) {
         setCurrentUser(sessionData.user);
         setSession(sessionData);
 
-        try {
-            await updateUser(user.id, { last_active: new Date().toISOString() });
-        } catch (err) {
-            console.error('Failed to update last_active:', err);
-        }
+        // Update last_active
+        updateUser(user.id, { last_active: new Date().toISOString() }).catch(err => console.error(err));
 
         logActivity('Login', `User ${username} logged in`);
 
         return { success: true };
     };
 
-    const logout = () => {
-        localStorage.removeItem('ipManagerSession');
-        setCurrentUser(null);
-        setSession(null);
-    };
+    const loginWithPin = async (pin) => {
+        const pinHash = await hashString(pin);
+        const user = users.find(u => u.pin_hash === pinHash);
 
-    const updateAccount = async (username, password) => {
-        if (!currentUser) return { success: false };
-
-        const updates = { username };
-        if (password) {
-            updates.password_hash = await hashString(password);
+        if (!user) {
+            return { success: false, message: 'Invalid PIN' };
         }
 
-        await updateUser(currentUser.id, updates);
+        const sessionData = {
+            user: { ...user, password_hash: undefined, pin_hash: undefined },
+            timestamp: new Date().getTime()
+        };
+
+        localStorage.setItem('ipManagerSession', JSON.stringify(sessionData));
+        setCurrentUser(sessionData.user);
+        setSession(sessionData);
+
+        // Update last_active
+        updateUser(user.id, { last_active: new Date().toISOString() }).catch(err => console.error(err));
+
+        logActivity('PIN Login', `User ${user.username} logged in via PIN`);
+
         return { success: true };
     };
 
-    // Export/Import Functions
-    const exportData = () => {
-        const data = {
-            inventory,
-            transactions,
-            users: users.map(u => ({ ...u, password_hash: undefined, pin_hash: undefined })),
-            suppliers,
-            settings,
-            exportDate: new Date().toISOString()
-        };
-        return JSON.stringify(data, null, 2);
+    const sessionData = {
+        user: { ...user, password_hash: undefined, pin_hash: undefined },
+        timestamp: new Date().getTime()
     };
 
-    const importData = async (jsonString) => {
-        try {
-            const data = JSON.parse(jsonString);
+    localStorage.setItem('ipManagerSession', JSON.stringify(sessionData));
+    setCurrentUser(sessionData.user);
+    setSession(sessionData);
 
-            // Note: This is a simple import - in production you'd want more validation
-            if (data.inventory) {
-                for (const item of data.inventory) {
-                    await supabase.from('inventory').upsert(item);
-                }
-            }
-            if (data.transactions) {
-                for (const tx of data.transactions) {
-                    await supabase.from('transactions').upsert(tx);
-                }
-            }
+    try {
+        await updateUser(user.id, { last_active: new Date().toISOString() });
+    } catch (err) {
+        console.error('Failed to update last_active:', err);
+    }
 
-            await loadAllData();
-            logActivity('Import Data', 'Data imported successfully');
-            alert('Data imported successfully!');
-        } catch (error) {
-            alert('Error importing data: ' + error.message);
-        }
-    };
+    logActivity('Login', `User ${username} logged in`);
 
-    // Utility Functions
-    const formatCurrency = (amount) => {
-        const curr = settings.currency || 'MAD';
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: curr === 'MAD' ? 'USD' : curr,
-            minimumFractionDigits: 2
-        }).format(amount).replace('$', curr + ' ');
-    };
+    return { success: true };
+};
 
-    const t = (key) => {
-        const lang = settings.language || 'en';
-        return translations[lang]?.[key] || key;
-    };
+const logout = () => {
+    localStorage.removeItem('ipManagerSession');
+    setCurrentUser(null);
+    setSession(null);
+};
 
-    const value = {
+const updateAccount = async (username, password) => {
+    if (!currentUser) return { success: false };
+
+    const updates = { username };
+    if (password) {
+        updates.password_hash = await hashString(password);
+    }
+
+    await updateUser(currentUser.id, updates);
+    return { success: true };
+};
+
+// Export/Import Functions
+const exportData = () => {
+    const data = {
         inventory,
         transactions,
-        users,
+        users: users.map(u => ({ ...u, password_hash: undefined, pin_hash: undefined })),
         suppliers,
         settings,
-        activityLogs,
-        currentUser,
-        session,
-        isAuthenticated: !!currentUser,
-        addInventoryItem,
-        updateInventoryItem,
-        deleteInventoryItem,
-        addTransaction,
-        updateTransaction,
-        deleteTransaction,
-        addUser,
-        updateUser,
-        deleteUser,
-        addSupplier,
-        updateSupplier,
-        deleteSupplier,
-        updateSettings,
-        login,
-        logout,
-        updateAccount,
-        exportData,
-        importData,
-        formatCurrency,
-        t,
-        logActivity
+        exportDate: new Date().toISOString()
     };
+    return JSON.stringify(data, null, 2);
+};
 
-    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+const importData = async (jsonString) => {
+    try {
+        const data = JSON.parse(jsonString);
+
+        // Note: This is a simple import - in production you'd want more validation
+        if (data.inventory) {
+            for (const item of data.inventory) {
+                await supabase.from('inventory').upsert(item);
+            }
+        }
+        if (data.transactions) {
+            for (const tx of data.transactions) {
+                await supabase.from('transactions').upsert(tx);
+            }
+        }
+
+        await loadAllData();
+        logActivity('Import Data', 'Data imported successfully');
+        alert('Data imported successfully!');
+    } catch (error) {
+        alert('Error importing data: ' + error.message);
+    }
+};
+
+// Utility Functions
+const formatCurrency = (amount) => {
+    const curr = settings.currency || 'MAD';
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: curr === 'MAD' ? 'USD' : curr,
+        minimumFractionDigits: 2
+    }).format(amount).replace('$', curr + ' ');
+};
+
+const t = (key) => {
+    const lang = settings.language || 'en';
+    return translations[lang]?.[key] || key;
+};
+
+const value = {
+    inventory,
+    transactions,
+    users,
+    suppliers,
+    settings,
+    activityLogs,
+    currentUser,
+    session,
+    isAuthenticated: !!currentUser,
+    addInventoryItem,
+    updateInventoryItem,
+    deleteInventoryItem,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    addUser,
+    updateUser,
+    deleteUser,
+    addSupplier,
+    updateSupplier,
+    deleteSupplier,
+    updateSettings,
+    login,
+    loginWithPin,
+    logout,
+    updateAccount,
+    exportData,
+    importData,
+    formatCurrency,
+    t,
+    logActivity
+};
+
+return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
 export function useApp() {
