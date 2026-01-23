@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, MagnifyingGlass, Funnel, DownloadSimple, DotsThreeVertical, PencilSimple, Trash } from '@phosphor-icons/react';
+import { Plus, MagnifyingGlass, Funnel, DownloadSimple, DotsThreeVertical, PencilSimple, Trash, Barcode } from '@phosphor-icons/react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useApp } from '../context/AppContext';
 
 export function Inventory() {
@@ -7,6 +8,29 @@ export function Inventory() {
     const [search, setSearch] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
+    const [showScanner, setShowScanner] = useState(false);
+    const [barcode, setBarcode] = useState('');
+
+    React.useEffect(() => {
+        if (showScanner) {
+            const scanner = new Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                /* verbose= */ false
+            );
+            scanner.render((decodedText) => {
+                setBarcode(decodedText);
+                scanner.clear();
+                setShowScanner(false);
+            }, (error) => {
+                // console.warn(error);
+            });
+
+            return () => {
+                scanner.clear().catch(err => console.error("Failed to clear html5-qrcode scanner. ", err));
+            };
+        }
+    }, [showScanner]);
 
     const filteredInventory = inventory.filter(item =>
         item.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -37,7 +61,7 @@ export function Inventory() {
                         <DownloadSimple size={18} />
                         Export
                     </button>
-                    <button onClick={() => { setEditingProduct(null); setShowModal(true); }} className="btn btn-primary">
+                    <button onClick={() => { setEditingProduct(null); setBarcode(''); setShowModal(true); }} className="btn btn-primary">
                         <Plus size={18} weight="bold" />
                         {t('add_product')}
                     </button>
@@ -93,7 +117,7 @@ export function Inventory() {
                                 </td>
                                 <td style={{ textAlign: 'right' }}>
                                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                        <button onClick={() => { setEditingProduct(item); setShowModal(true); }} className="btn-icon">
+                                        <button onClick={() => { setEditingProduct(item); setBarcode(item.barcode || ''); setShowModal(true); }} className="btn-icon">
                                             <PencilSimple size={16} />
                                         </button>
                                         <button onClick={() => deleteProduct(item.id)} className="btn-icon" style={{ color: '#ef4444' }}>
@@ -132,6 +156,25 @@ export function Inventory() {
                                 <label className="form-label">Product Name</label>
                                 <input name="name" required className="form-input" defaultValue={editingProduct?.name} />
                             </div>
+
+                            <div className="form-group">
+                                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span>Barcode</span>
+                                    <button type="button" onClick={() => setShowScanner(!showScanner)} style={{ border: 'none', background: 'none', color: 'var(--primary)', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Barcode size={18} />
+                                        {showScanner ? 'Close Scanner' : 'Scan'}
+                                    </button>
+                                </label>
+                                {showScanner && <div id="reader" style={{ width: '100%', marginBottom: '1rem', borderRadius: '8px', overflow: 'hidden' }}></div>}
+                                <input
+                                    name="barcode"
+                                    className="form-input"
+                                    value={barcode}
+                                    onChange={(e) => setBarcode(e.target.value)}
+                                    placeholder="Scan or enter barcode"
+                                />
+                            </div>
+
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                                 <div className="form-group">
                                     <label className="form-label">Category</label>
@@ -179,8 +222,9 @@ export function Inventory() {
                             </div>
                         </form>
                     </div>
-                </div>
-            )}
-        </div>
+                </div >
+            )
+            }
+        </div >
     );
 }

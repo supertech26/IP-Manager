@@ -46,6 +46,8 @@ export function Header() {
         }
     };
 
+
+
     return (
         <header className="header">
             <h1 className="page-title">{title}</h1>

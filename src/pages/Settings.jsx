@@ -58,6 +58,7 @@ export function Settings() {
                                         <option>EUR</option>
                                     </select>
                                 </div>
+
                                 <div className="form-group">
                                     <label className="form-label">Language</label>
                                     <select name="language" className="form-select" defaultValue={settings.language}>

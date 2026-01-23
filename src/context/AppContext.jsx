@@ -17,8 +17,7 @@ export function AppProvider({ children }) {
         currency: 'MAD',
         dateFormat: 'MM/DD/YYYY',
         logoUrl: '',
-        language: 'en',
-        theme: 'light'
+        language: 'en'
     });
 
     // Auth State
@@ -29,6 +28,10 @@ export function AppProvider({ children }) {
     useEffect(() => {
         loadAllData();
         checkSession();
+    }, []);
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', 'light');
     }, []);
 
     const loadAllData = async () => {
@@ -120,7 +123,15 @@ export function AppProvider({ children }) {
                 .from('settings')
                 .select('*')
                 .single();
-            if (settingsData) setSettings(settingsData);
+            if (settingsData) {
+                setSettings(prev => ({
+                    ...prev,
+                    ...settingsData,
+                    appName: settingsData.app_name || prev.appName,
+                    logoUrl: settingsData.logo_url || prev.logoUrl,
+                    dateFormat: settingsData.date_format || prev.dateFormat
+                }));
+            }
 
             // Load activity logs
             const { data: logsData } = await supabase
@@ -153,6 +164,7 @@ export function AppProvider({ children }) {
         const newItem = {
             id: `IP-${Date.now()}`,
             name: item.name,
+            barcode: item.barcode,
             category: item.category,
             type: item.type,
             supplier: item.supplier,
