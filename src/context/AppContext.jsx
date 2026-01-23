@@ -499,9 +499,13 @@ export function AppProvider({ children }) {
 
     const loginWithPin = async (pin) => {
         const pinHash = await hashString(pin);
+        console.log('PIN Debug:', { inputPin: pin, computedHash: pinHash });
+        console.log('Available Users Hashes:', users.map(u => ({ username: u.username, pinHash: u.pin_hash })));
+
         const user = users.find(u => u.pin_hash === pinHash);
 
         if (!user) {
+            console.warn('No user found with matching PIN hash');
             return { success: false, message: 'Invalid PIN' };
         }
 
