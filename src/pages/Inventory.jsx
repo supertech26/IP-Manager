@@ -10,6 +10,7 @@ export function Inventory() {
     const [editingProduct, setEditingProduct] = useState(null);
     const [showScanner, setShowScanner] = useState(false);
     const [barcode, setBarcode] = useState('');
+    const [productType, setProductType] = useState('Digital');
 
     React.useEffect(() => {
         if (showScanner) {
@@ -61,7 +62,7 @@ export function Inventory() {
                         <DownloadSimple size={18} />
                         Export
                     </button>
-                    <button onClick={() => { setEditingProduct(null); setBarcode(''); setShowModal(true); }} className="btn btn-primary">
+                    <button onClick={() => { setEditingProduct(null); setBarcode(''); setProductType('Digital'); setShowModal(true); }} className="btn btn-primary">
                         <Plus size={18} weight="bold" />
                         {t('add_product')}
                     </button>
@@ -117,7 +118,7 @@ export function Inventory() {
                                 </td>
                                 <td style={{ textAlign: 'right' }}>
                                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                        <button onClick={() => { setEditingProduct(item); setBarcode(item.barcode || ''); setShowModal(true); }} className="btn-icon">
+                                        <button onClick={() => { setEditingProduct(item); setBarcode(item.barcode || ''); setProductType(item.type || 'Digital'); setShowModal(true); }} className="btn-icon">
                                             <PencilSimple size={16} />
                                         </button>
                                         <button onClick={() => deleteProduct(item.id)} className="btn-icon" style={{ color: '#ef4444' }}>
@@ -157,23 +158,25 @@ export function Inventory() {
                                 <input name="name" required className="form-input" defaultValue={editingProduct?.name} />
                             </div>
 
-                            <div className="form-group">
-                                <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span>Barcode</span>
-                                    <button type="button" onClick={() => setShowScanner(!showScanner)} style={{ border: 'none', background: 'none', color: 'var(--primary)', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                        <Barcode size={18} />
-                                        {showScanner ? 'Close Scanner' : 'Scan'}
-                                    </button>
-                                </label>
-                                {showScanner && <div id="reader" style={{ width: '100%', marginBottom: '1rem', borderRadius: '8px', overflow: 'hidden' }}></div>}
-                                <input
-                                    name="barcode"
-                                    className="form-input"
-                                    value={barcode}
-                                    onChange={(e) => setBarcode(e.target.value)}
-                                    placeholder="Scan or enter barcode"
-                                />
-                            </div>
+                            {productType !== 'Digital' && (
+                                <div className="form-group">
+                                    <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span>Barcode</span>
+                                        <button type="button" onClick={() => setShowScanner(!showScanner)} style={{ border: 'none', background: 'none', color: 'var(--primary)', fontWeight: '600', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Barcode size={18} />
+                                            {showScanner ? 'Close Scanner' : 'Scan'}
+                                        </button>
+                                    </label>
+                                    {showScanner && <div id="reader" style={{ width: '100%', marginBottom: '1rem', borderRadius: '8px', overflow: 'hidden' }}></div>}
+                                    <input
+                                        name="barcode"
+                                        className="form-input"
+                                        value={barcode}
+                                        onChange={(e) => setBarcode(e.target.value)}
+                                        placeholder="Scan or enter barcode"
+                                    />
+                                </div>
+                            )}
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                                 <div className="form-group">
@@ -186,7 +189,12 @@ export function Inventory() {
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Type</label>
-                                    <select name="type" className="form-select" defaultValue={editingProduct?.type || 'Digital'}>
+                                    <select
+                                        name="type"
+                                        className="form-select"
+                                        value={productType}
+                                        onChange={(e) => setProductType(e.target.value)}
+                                    >
                                         <option value="Digital">Digital</option>
                                         <option value="Physical">Physical</option>
                                     </select>

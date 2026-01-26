@@ -164,7 +164,7 @@ export function AppProvider({ children }) {
         const newItem = {
             id: `IP-${Date.now()}`,
             name: item.name,
-            barcode: item.barcode,
+            // barcode: item.barcode, // Conditionally added
             category: item.category,
             type: item.type,
             supplier: item.supplier,
@@ -177,6 +177,9 @@ export function AppProvider({ children }) {
             status: item.status,
             created_at: new Date().toISOString()
         };
+
+        // Only include barcode key if it has a value, preventing errors if column missing
+        if (item.barcode) newItem.barcode = item.barcode;
 
         const { data, error } = await supabase
             .from('inventory')

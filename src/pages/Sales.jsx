@@ -62,6 +62,7 @@ export function Sales() {
                             <th>{t('date')}</th>
                             <th>{t('customer')}</th>
                             <th>{t('product')}</th>
+                            <th>{t('status')}</th>
                             <th>{t('total')}</th>
                             <th>Expiry / Days</th>
                             <th style={{ textAlign: 'right' }}>{t('actions')}</th>
@@ -80,6 +81,11 @@ export function Sales() {
                                     <td>
                                         <div style={{ fontWeight: 500 }}>{tx.subName || tx.productName}</div>
                                         <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--primary)' }}>{tx.subType || tx.digitalType}</div>
+                                    </td>
+                                    <td>
+                                        <span className={`badge badge-${tx.status === 'Completed' ? 'success' : 'warning'}`}>
+                                            {tx.status || 'Completed'}
+                                        </span>
                                     </td>
                                     <td style={{ fontWeight: 700 }}>{formatCurrency(tx.totalAmount)}</td>
                                     <td>
@@ -133,7 +139,7 @@ export function Sales() {
                             }
 
                             if (editingTx) updateTransaction(editingTx.id, data);
-                            else addTransaction({ ...data, status: 'Completed' });
+                            else addTransaction(data);
                             setShowModal(false);
                         }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
@@ -217,6 +223,14 @@ export function Sales() {
                             <div className="form-group">
                                 <label className="form-label">Notes</label>
                                 <textarea name="notes" className="form-textarea" rows="3" defaultValue={editingTx?.notes} placeholder="Add any additional notes..."></textarea>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Status</label>
+                                <select name="status" className="form-select" defaultValue={editingTx?.status || 'Completed'}>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Pending">Pending</option>
+                                </select>
                             </div>
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
