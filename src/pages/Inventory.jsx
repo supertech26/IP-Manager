@@ -110,7 +110,7 @@ export function Inventory() {
                                 </td>
                                 <td><span style={{ fontSize: '0.85rem' }}>{item.category}</span></td>
                                 <td style={{ fontWeight: 600 }}>{formatCurrency(item.price)}</td>
-                                <td style={{ fontWeight: 600 }}>{item.stock}</td>
+                                <td style={{ fontWeight: 600 }}>{item.stock} / {item.initial_stock}</td>
                                 <td>
                                     <span className={`badge badge-${item.status === 'Active' ? 'success' : item.status === 'Low Stock' ? 'warning' : 'danger'}`}>
                                         {item.status}
@@ -147,10 +147,21 @@ export function Inventory() {
 
                             // Ensure required fields
                             if (!data.status) data.status = 'Active';
-                            if (!editingProduct && !data.dateAdded) data.dateAdded = new Date().toISOString();
 
-                            if (editingProduct) updateProduct(editingProduct.id, data);
-                            else addProduct(data);
+                            if (editingProduct) {
+                                // Smart Stock Update: If stock increased, add difference to initial_stock (Total)
+                                const stockDiff = data.stock - editingProduct.stock;
+                                if (stockDiff > 0) {
+                                    data.initial_stock = (editingProduct.initial_stock || editingProduct.stock) + stockDiff;
+                                } else {
+                                    // If stock decreased or same, keep original total
+                                    data.initial_stock = editingProduct.initial_stock;
+                                }
+                                updateProduct(editingProduct.id, data);
+                            } else {
+                                if (!data.dateAdded) data.dateAdded = new Date().toISOString();
+                                addProduct(data);
+                            }
                             setShowModal(false);
                         }}>
                             <div className="form-group">
